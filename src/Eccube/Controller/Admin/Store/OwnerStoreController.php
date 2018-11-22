@@ -360,15 +360,15 @@ class OwnerStoreController extends AbstractController
     public function apiUpgrade(Request $request, EventDispatcherInterface $dispatcher)
     {
         $this->isTokenValid();
-
-        // .maintenanceファイルを設置
-        $this->systemService->switchMaintenance(true);
-
-        // TERMINATE時のイベントを設定
-        $dispatcher->addListener(KernelEvents::TERMINATE, function () {
-            // .maintenanceファイルを削除
-            $this->systemService->switchMaintenance();
-        });
+//
+//        // .maintenanceファイルを設置
+//        $this->systemService->switchMaintenance(true);
+//
+//        // TERMINATE時のイベントを設定
+//        $dispatcher->addListener(KernelEvents::TERMINATE, function () {
+//            // .maintenanceファイルを削除
+//            $this->systemService->switchMaintenance();
+//        });
         
         $this->cacheUtil->clearCache();
 
