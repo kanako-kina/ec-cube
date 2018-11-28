@@ -14,13 +14,19 @@
 namespace Eccube\Service;
 
 use Doctrine\ORM\EntityManagerInterface;
+use Symfony\Component\EventDispatcher\EventSubscriberInterface;
 use Symfony\Component\HttpKernel\DataCollector\MemoryDataCollector;
 use Symfony\Component\DependencyInjection\ContainerInterface;
+use Symfony\Component\HttpKernel\KernelEvents;
+use Symfony\Component\HttpKernel\Event\PostResponseEvent;
 
-class SystemService
+class SystemService implements EventSubscriberInterface
 {
     const AUTO_MAINTENANCE = 'auto_maintenance';
     const AUTO_MAINTENANCE_UPDATE = 'auto_maintenance_update';
+
+    private $disableMaintenanceAfterResponse = false;
+    private $maintenanceMode = null;
 
     /**
      * @var EntityManagerInterface
@@ -128,15 +134,35 @@ class SystemService
     {
         $isMaintenanceMode = $this->isMaintenanceMode();
         $path = $this->container->getParameter('eccube_content_maintenance_file_path');
+        log_debug('イェー');
 
         if ($isEnable && $isMaintenanceMode === false) {
             file_put_contents($path, $mode);
+            log_debug('つっぱり');
         } elseif ($isEnable === false && $isMaintenanceMode) {
             $contents = file_get_contents($path);
             if ($contents == $mode) {
+                log_debug('ヒョー');
                 unlink($path);
             }
         }
+    }
+
+    public function disableMaintenanceEvent(PostResponseEvent $event)
+    {
+        log_debug('disableMaintenanceAfterResponse：'.var_export($this->disableMaintenanceAfterResponse,true));
+        log_debug('maintenanceMode：'.var_export($this->maintenanceMode,true));
+        if ($this->disableMaintenanceAfterResponse){
+            $this->switchMaintenance(false, $this->maintenanceMode);
+        }
+        log_debug('ヒョードル');
+    }
+
+    public function disableMaintenance($mode = null)
+    {
+        $this->disableMaintenanceAfterResponse = true;
+        $this->maintenanceMode = $mode;
+        log_debug('呼ばれてほしい');
     }
 
     /**
@@ -148,6 +174,14 @@ class SystemService
     {
         // .maintenanceが存在しているかチェック
         return file_exists($this->container->getParameter('eccube_content_maintenance_file_path'));
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public static function getSubscribedEvents()
+    {
+        return [KernelEvents::TERMINATE => 'disableMaintenanceEvent'];
     }
 
 }

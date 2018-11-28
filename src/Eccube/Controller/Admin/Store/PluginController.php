@@ -276,24 +276,22 @@ class PluginController extends AbstractController
     public function enable(Plugin $Plugin, CacheUtil $cacheUtil, Request $request, EventDispatcherInterface $dispatcher)
     {
         $this->isTokenValid();
-
+        log_debug('あああああああああ');
         // QueryString maintenance_modeがない場合
         if (!$request->query->has('maintenance_mode')) {
             // プラグイン管理の有効ボタンを押したとき
             $this->systemService->switchMaintenance(true); // auto_maintenanceと設定されたファイルを生成
+            log_debug('シェー');
             // TERMINATE時のイベントを設定
-            $dispatcher->addListener(KernelEvents::TERMINATE, function () {
-            $this->systemService->switchMaintenance(); // auto_maintenanceと設定されたファイルを削除
-            });
+            $this->systemService->disableMaintenance();
+
         } else {
+            log_debug('うううううううううううううう');
             // プラグイン管理のアップデートを実行したとき
             // TERMINATE時のイベントを設定
-            $dispatcher->addListener(KernelEvents::TERMINATE, function () {
-                // auto_maintenance_updateと設定されたファイルを削除
-                $this->systemService->switchMaintenance(false,SystemService::AUTO_MAINTENANCE_UPDATE);
-            });
+            $this->systemService->disableMaintenance(SystemService::AUTO_MAINTENANCE_UPDATE);
         }
-
+        log_debug('おおおおおおおおおおおおおおおおおお');
         $cacheUtil->clearCache();
 
         $log = null;
